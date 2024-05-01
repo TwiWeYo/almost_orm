@@ -14,7 +14,7 @@ namespace AlmostOrm.MapConfig
         public bool HasId { get; private set; }
         public OnConflict OnConflict { get; private set; }
         public bool IsUniqueIndex { get; private set; }
-        public Expression<Func<T, object>>[] Index { get; private set; }
+        public string[] Index { get; private set; }
 
         public MapConfig<T> WithTableName(string tableName)
         {
@@ -34,7 +34,7 @@ namespace AlmostOrm.MapConfig
             return this;
         }
 
-        public MapConfig<T> WithIndex(bool isUnique, params Expression<Func<T, object>>[] selector)
+        public MapConfig<T> WithIndex(bool isUnique, params string[] selector)
         {
             IsUniqueIndex = isUnique;
             Index = selector;

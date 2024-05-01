@@ -1,4 +1,5 @@
 ﻿using AlmostOrm.MapConfig;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -15,7 +16,8 @@ namespace AlmostOrm
         public static void GenerateTestMap<T>(MapConfig<T>? config = null) where T : class
         {
             var sb = new StringBuilder();
-            sb.Append(@$"CREATE TABLE {config?.TableName ?? nameof(T).ToLower()}
+            var tableName = config?.TableName ?? nameof(T).ToLower();
+            sb.Append(@$"CREATE TABLE {tableName}
 (
 ");
             var type = typeof(T);
@@ -24,7 +26,28 @@ namespace AlmostOrm
             sb.Append(string.Join(",\n", GetMappedStrings(properties)));
             sb.AppendLine("\n);");
 
+            if (config?.Index?.Any() == true)
+            {
+                sb.Append(CreateIndex(type, tableName, config.IsUniqueIndex, config.Index));
+            }
+
             Console.WriteLine(sb.ToString());
+        }
+
+        private static string CreateIndex(Type type, string tableName, bool isUniqueIndex, string[] index)
+        {
+            if (index.Any(q => type.GetProperty(q, BindingFlags.Public| BindingFlags.Instance) is null))
+            {
+                throw new ArgumentException($"{type.Name} does not contain such properties");
+            }
+
+            return @$"
+CREATE {(isUniqueIndex ? "UNIQUE INDEX ux_" : "INDEX ix_")}{tableName}_{string.Join("_", index)}
+ON {tableName}
+(
+    {string.Join(",\n    ", index)}
+);
+";
         }
 
         private static IEnumerable<string> GetMappedStrings(PropertyInfo[] properties)
