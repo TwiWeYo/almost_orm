@@ -1,37 +1,47 @@
 ﻿using AlmostOrm.MapConfig;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
+using System.Text.Json;
 
 namespace AlmostOrm
 {
     public static class SqlClassMap
     {
-        private static readonly Type _typeInt = typeof(int);
-        private static readonly Type _typeLong = typeof(long);
-        private static readonly Type _typeFloat = typeof(float);
-        private static readonly Type _typeDouble = typeof(double);
-        private static readonly Type _typeDecimal = typeof(decimal);
-        private static readonly Type _typeString = typeof(string);
+        private static string path = "map-config.json";
+        private static AlmostOrmSettings _settings;
+        static SqlClassMap()
+        {
+            using var fs = new FileStream(path, FileMode.Open);
+            _settings = JsonSerializer.Deserialize<AlmostOrmSettings>(fs)!;
+            if (_settings == null)
+            {
+                throw new ArgumentNullException(nameof(fs));
+            }
+        }
+
         public static void GenerateTestMap<T>(MapConfig<T>? config = null) where T : class
         {
-            var sb = new StringBuilder();
             var tableName = config?.TableName ?? nameof(T).ToLower();
-            sb.Append(@$"CREATE TABLE {tableName}
-(
-");
+            string id = _settings.IdTemplate;
+            string index = string.Empty;
+
+
             var type = typeof(T);
 
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            sb.Append(string.Join(",\n", GetMappedStrings(properties)));
-            sb.AppendLine("\n);");
+            var tableContents = string.Join(",\n\t", GetMappedStrings(properties));
 
             if (config?.Index?.Any() == true)
             {
-                sb.Append(CreateIndex(type, tableName, config.IsUniqueIndex, config.Index));
+                index = CreateIndex(type, tableName, config.IsUniqueIndex, config.Index);
             }
 
-            Console.WriteLine(sb.ToString());
+            var result = _settings.TableTemplate
+                .Replace("<table_name>", tableName)
+                .Replace("<table_contents>", tableContents)
+                .Replace("<id>", id)
+                .Replace("<index>", index);
+
+            Console.WriteLine(result);
         }
 
         private static string CreateIndex(Type type, string tableName, bool isUniqueIndex, string[] index)
@@ -40,14 +50,14 @@ namespace AlmostOrm
             {
                 throw new ArgumentException($"{type.Name} does not contain such properties");
             }
+            var indexName = $"{(isUniqueIndex ? "ux_" : "ix_")}{tableName}_{string.Join('_', index)}";
+            var indexContents = string.Join(",\n\t", index);
 
-            return @$"
-CREATE {(isUniqueIndex ? "UNIQUE INDEX ux_" : "INDEX ix_")}{tableName}_{string.Join("_", index)}
-ON {tableName}
-(
-    {string.Join(",\n    ", index)}
-);
-";
+            return _settings.IndexTemplate
+                .Replace("<unique>", isUniqueIndex ? "unique" : string.Empty)
+                .Replace("<index_name>", indexName)
+                .Replace("<table_name>", tableName)
+                .Replace("<index_contents>", indexContents);
         }
 
         private static IEnumerable<string> GetMappedStrings(PropertyInfo[] properties)
@@ -68,17 +78,15 @@ ON {tableName}
 
                     additionalInfo = string.Empty;
                 }
-
-                var sqlType = propType switch
+                var typeName = propType.Name.ToLower();
+                if (_settings.TypeMaps.TryGetValue(typeName, out var sqlType))
                 {
-                    _ when propType == _typeInt => "int",
-                    _ when propType == _typeLong => "bigint",
-                    _ when propType == _typeFloat || propType == _typeDouble || propType == _typeDecimal => "numeric(12, 6)",
-                    _ when propType == _typeString => "varchar(128)",
-                    _ => throw new NotSupportedException($"{propType!.Name} is not yet supported")
-                };
-
-                yield return $"    {name} {sqlType}{additionalInfo}";
+                    yield return $"{name} {sqlType}{additionalInfo}";
+                }
+                else
+                {
+                    throw new ArgumentException($"{propType.Name} is not supported");
+                }
             }
         }
     }
