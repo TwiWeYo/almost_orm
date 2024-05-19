@@ -1,5 +1,6 @@
 ﻿using AlmostOrm.MapConfig;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 
 namespace AlmostOrm
@@ -20,28 +21,29 @@ namespace AlmostOrm
 
         public static void GenerateTestMap<T>(MapConfig<T>? config = null) where T : class
         {
-            var tableName = config?.TableName ?? nameof(T).ToLower();
+            config ??= new();
+
+            var tableName = config.TableName ?? nameof(T).ToLower();
             string id = _settings.IdTemplate;
             string index = string.Empty;
 
 
             var type = typeof(T);
 
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            var tableContents = string.Join(",\n\t", GetMappedStrings(properties));
+            var tableContents = string.Join(",\n\t", GetMappedStrings(config.Mapping));
 
-            if (config?.Index?.Any() == true)
+            if (config.Index?.Any() == true)
             {
                 index = CreateIndex(type, tableName, config.IsUniqueIndex, config.Index);
             }
 
-            var result = _settings.TableTemplate
+            var result = new StringBuilder(_settings.TableTemplate)
                 .Replace("<table_name>", tableName)
                 .Replace("<table_contents>", tableContents)
                 .Replace("<id>", id)
                 .Replace("<index>", index);
 
-            Console.WriteLine(result);
+            Console.WriteLine(result.ToString());
         }
 
         private static string CreateIndex(Type type, string tableName, bool isUniqueIndex, string[] index)
@@ -53,41 +55,31 @@ namespace AlmostOrm
             var indexName = $"{(isUniqueIndex ? "ux_" : "ix_")}{tableName}_{string.Join('_', index)}";
             var indexContents = string.Join(",\n\t", index);
 
-            return _settings.IndexTemplate
+            return new StringBuilder(_settings.IndexTemplate)
                 .Replace("<unique>", isUniqueIndex ? "unique" : string.Empty)
                 .Replace("<index_name>", indexName)
                 .Replace("<table_name>", tableName)
-                .Replace("<index_contents>", indexContents);
+                .Replace("<index_contents>", indexContents)
+                .ToString();
         }
 
-        private static IEnumerable<string> GetMappedStrings(PropertyInfo[] properties)
+        private static IEnumerable<string> GetMappedStrings<T>(Dictionary<string, ParaMap<T>> mapping) where T : class
         {
-            var nullabilityInfoContext = new NullabilityInfoContext();
-
-            foreach (var property in properties)
+            return mapping.Values.Select(map =>
             {
-                var propType = property.PropertyType;
-                var nullabilityInfo = nullabilityInfoContext.Create(property);
+                var name = map.CustomName ?? map.Name.ToLower();
 
-                var name = property.Name;
-                var additionalInfo = " NOT NULL";
+                var precision = map.Precision?.Item1.ToString() ?? string.Empty;
+                precision += map.Precision?.Item2?.ToString() ?? string.Empty;
+                if (!string.IsNullOrEmpty(precision))
+                    precision = $"({precision})";
 
-                if (nullabilityInfo.WriteState is NullabilityState.Nullable)
-                {
-                    propType = propType.IsValueType ? Nullable.GetUnderlyingType(propType) : propType;
+                var type = map.SqlType ?? _settings.TypeMaps[map.Type.Name.ToLower()];
+                type = type.Replace("<precision>", precision);
+                var nullability = map.Nullable ? string.Empty : " not null";
 
-                    additionalInfo = string.Empty;
-                }
-                var typeName = propType.Name.ToLower();
-                if (_settings.TypeMaps.TryGetValue(typeName, out var sqlType))
-                {
-                    yield return $"{name} {sqlType}{additionalInfo}";
-                }
-                else
-                {
-                    throw new ArgumentException($"{propType.Name} is not supported");
-                }
-            }
+                return $"{name} {type}{nullability}";
+            });
         }
     }
 }

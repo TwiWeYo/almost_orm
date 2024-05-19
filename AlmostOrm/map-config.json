@@ -3,12 +3,12 @@
     "ProcedureTemplate": "CREATE OR REPACE PROCEDURE <procedure_name>\n{\n\t<procedure_contents>\n}\n\n",
     "TypeMaps":
     {
-        "single" : "numeric(<precision>)",
-        "double" : "numeric(<precision>)",
-        "decimal" : "numeric(<precision>)",
+        "single" : "numeric<precision>",
+        "double" : "numeric<precision>",
+        "decimal" : "numeric<precision>",
         "int32" : "bigint",
         "int64" : "bigint",
-        "string" : "varchar(<precision>)"
+        "string" : "varchar<precision>"
     },
     "IndexTemplate": "CREATE <unique> INDEX <index_name> ON <table_name>\n{\n\t<index_contents>\n}",
     "IdTemplate": "" 
