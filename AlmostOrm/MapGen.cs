@@ -53,7 +53,7 @@ namespace AlmostOrm
         {
             if (index.Any(q => !config.Mapping.ContainsKey(q)))
             {
-                throw new ArgumentException($"{nameof(T)} does not contain such properties");
+                throw new ArgumentException($"{typeof(T).Name} does not contain such properties");
             }
 
             if (config.CaseConverter is not null)
