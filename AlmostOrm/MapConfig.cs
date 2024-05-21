@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using AlmostOrm.Converters;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace AlmostOrm.MapConfig
@@ -17,6 +18,7 @@ namespace AlmostOrm.MapConfig
         public OnConflict OnConflict { get; private set; }
         public bool IsUniqueIndex { get; private set; }
         public string[] Index { get; private set; }
+        public ICaseConverter? CaseConverter { get; private set; }
         public Dictionary<string, ParaMap<T>> Mapping { get; private init; }
 
         public MapConfig()
@@ -58,6 +60,12 @@ namespace AlmostOrm.MapConfig
         {
             IsUniqueIndex = isUnique;
             Index = selector;
+            return this;
+        }
+
+        public MapConfig<T> WithCaseConverter(ICaseConverter caseConverter)
+        {
+            CaseConverter = caseConverter;
             return this;
         }
 

@@ -1,15 +1,14 @@
 ﻿using AlmostOrm.MapConfig;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
 namespace AlmostOrm
 {
-    public static class SqlClassMap
+    public static class MapGen
     {
         private static string path = "map-config.json";
         private static AlmostOrmSettings _settings;
-        static SqlClassMap()
+        static MapGen()
         {
             using var fs = new FileStream(path, FileMode.Open);
             _settings = JsonSerializer.Deserialize<AlmostOrmSettings>(fs)!;
@@ -22,19 +21,23 @@ namespace AlmostOrm
         public static void GenerateTestMap<T>(MapConfig<T>? config = null) where T : class
         {
             config ??= new();
+            var name = typeof(T).Name;
 
-            var tableName = config.TableName ?? nameof(T).ToLower();
+            var tableName = config.TableName ?? 
+                config.CaseConverter?.Convert(name) ??
+                nameof(name);
+
             string id = _settings.IdTemplate;
             string index = string.Empty;
 
 
             var type = typeof(T);
 
-            var tableContents = string.Join(",\n\t", GetMappedStrings(config.Mapping));
+            var tableContents = string.Join(",\n\t", GetMappedStrings(config));
 
             if (config.Index?.Any() == true)
             {
-                index = CreateIndex(type, tableName, config.IsUniqueIndex, config.Index);
+                index = CreateIndex(config, tableName, config.IsUniqueIndex, config.Index);
             }
 
             var result = new StringBuilder(_settings.TableTemplate)
@@ -46,12 +49,20 @@ namespace AlmostOrm
             Console.WriteLine(result.ToString());
         }
 
-        private static string CreateIndex(Type type, string tableName, bool isUniqueIndex, string[] index)
+        private static string CreateIndex<T>(MapConfig<T> config, string tableName, bool isUniqueIndex, string[] index) where T : class
         {
-            if (index.Any(q => type.GetProperty(q, BindingFlags.Public| BindingFlags.Instance) is null))
+            if (index.Any(q => !config.Mapping.ContainsKey(q)))
             {
-                throw new ArgumentException($"{type.Name} does not contain such properties");
+                throw new ArgumentException($"{nameof(T)} does not contain such properties");
             }
+
+            if (config.CaseConverter is not null)
+            {
+                index = index
+                    .Select(q => config.Mapping[q].CustomName ?? config.CaseConverter.Convert(q))
+                    .ToArray();
+            }
+
             var indexName = $"{(isUniqueIndex ? "ux_" : "ix_")}{tableName}_{string.Join('_', index)}";
             var indexContents = string.Join(",\n\t", index);
 
@@ -63,11 +74,15 @@ namespace AlmostOrm
                 .ToString();
         }
 
-        private static IEnumerable<string> GetMappedStrings<T>(Dictionary<string, ParaMap<T>> mapping) where T : class
+        private static IEnumerable<string> GetMappedStrings<T>(MapConfig<T> config) where T : class
         {
+            var mapping = config.Mapping;
+
             return mapping.Values.Select(map =>
             {
-                var name = map.CustomName ?? map.Name.ToLower();
+                var name = map.CustomName ??
+                    config.CaseConverter?.Convert(map.Name) ??
+                    map.Name;
 
                 var precision = map.Precision?.Item1.ToString() ?? string.Empty;
                 precision += map.Precision?.Item2?.ToString() ?? string.Empty;
