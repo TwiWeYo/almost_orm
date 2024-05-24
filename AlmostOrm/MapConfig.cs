@@ -7,23 +7,24 @@ namespace AlmostOrm.MapConfig
     public enum OnConflict
     {
         Ignore,
-        Nothing,
+        DoNothing,
         Update
     }
     public class MapConfig<T> where T : class
     {
         private static readonly PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        public string TableName { get; private set; }
+        public string? TableName { get; private set; }
+        public string? ProcedureName { get; private set; }
         public bool HasId { get; private set; }
         public OnConflict OnConflict { get; private set; }
         public bool IsUniqueIndex { get; private set; }
         public string[] Index { get; private set; }
         public ICaseConverter? CaseConverter { get; private set; }
-        public Dictionary<string, ParaMap<T>> Mapping { get; private init; }
+        public Dictionary<string, ParaMap<T>> ParaMaps { get; private init; }
 
         public MapConfig()
         {
-            Mapping = GetDefaultParaMaps();
+            ParaMaps = GetDefaultParaMaps();
         }
 
         private Dictionary<string, ParaMap<T>> GetDefaultParaMaps()
@@ -41,6 +42,11 @@ namespace AlmostOrm.MapConfig
         public MapConfig<T> WithTableName(string tableName)
         {
             TableName = tableName;
+            return this;
+        }
+        public MapConfig<T> WithProcedureName(string procedureName)
+        {
+            ProcedureName = procedureName;
             return this;
         }
 
@@ -73,7 +79,7 @@ namespace AlmostOrm.MapConfig
         {
             foreach (var map in mapping)
             {
-                Mapping[map.Name] = map;
+                ParaMaps[map.Name] = map;
             }
 
             return this;

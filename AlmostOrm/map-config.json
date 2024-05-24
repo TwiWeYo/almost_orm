@@ -1,6 +1,6 @@
 {
     "TableTemplate": "CREATE TABLE <table_name>\n{\n\t<table_contents>\n}\n\n<id>\n\n<index>",
-    "ProcedureTemplate": "CREATE OR REPACE PROCEDURE <procedure_name>\n{\n\t<procedure_contents>\n}\n\n",
+    "ProcedureTemplate": "CREATE OR REPACE PROCEDURE <procedure_name>\n(\n\t<procedure_contents>\n)\n\nlanguage plgsql\nas $$\nbegin\n\tinsert into <table_name>\n\t(\n\t\t<procedure_data>\n\t)\n\tvalues\n\t(\n\t\t<procedure_values>\n\t)\n\t<on_conflict>\nend;\n$$;",
     "TypeMaps":
     {
         "single" : "numeric<precision>",

@@ -1,6 +1,6 @@
 ﻿namespace AlmostOrm
 {
-    public class AlmostOrmSettings
+    public class Settings
     {
         public string TableTemplate { get; set; }
         public string ProcedureTemplate { get; set; }

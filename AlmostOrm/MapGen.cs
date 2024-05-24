@@ -7,18 +7,18 @@ namespace AlmostOrm
     public static class MapGen
     {
         private static string path = "map-config.json";
-        private static AlmostOrmSettings _settings;
+        private static Settings _settings;
         static MapGen()
         {
             using var fs = new FileStream(path, FileMode.Open);
-            _settings = JsonSerializer.Deserialize<AlmostOrmSettings>(fs)!;
+            _settings = JsonSerializer.Deserialize<Settings>(fs)!;
             if (_settings == null)
             {
                 throw new ArgumentNullException(nameof(fs));
             }
         }
 
-        public static void GenerateTestMap<T>(MapConfig<T>? config = null) where T : class
+        public static void MakeTable<T>(string table_path, MapConfig<T>? config = null) where T : class
         {
             config ??= new();
             var name = typeof(T).Name;
@@ -27,39 +27,110 @@ namespace AlmostOrm
                 config.CaseConverter?.Convert(name) ??
                 nameof(name);
 
-            string id = _settings.IdTemplate;
-            string index = string.Empty;
-
-
-            var type = typeof(T);
+            var id = _settings.IdTemplate;
+            var index = string.Empty;
 
             var tableContents = string.Join(",\n\t", GetMappedStrings(config));
 
             if (config.Index?.Any() == true)
             {
-                index = CreateIndex(config, tableName, config.IsUniqueIndex, config.Index);
+                index = CreateIndex(config, tableName);
             }
 
             var result = new StringBuilder(_settings.TableTemplate)
                 .Replace("<table_name>", tableName)
                 .Replace("<table_contents>", tableContents)
                 .Replace("<id>", id)
-                .Replace("<index>", index);
+                .Replace("<index>", index)
+                .Replace("\t", "    ");
 
-            Console.WriteLine(result.ToString());
+            using (var fs = new FileStream(table_path, FileMode.OpenOrCreate))
+            using (var sw = new StreamWriter(fs))
+            {
+                sw.Write(result.ToString());
+            }
         }
 
-        private static string CreateIndex<T>(MapConfig<T> config, string tableName, bool isUniqueIndex, string[] index) where T : class
+        public static void MakeProcedure<T>(string procedurePath, MapConfig<T>? config = null) where T : class
         {
-            if (index.Any(q => !config.Mapping.ContainsKey(q)))
+            config??= new();
+            var name = typeof(T).Name;
+
+            var procedureName = config.ProcedureName ??
+                config.CaseConverter?.Convert(name + "Save") ??
+                nameof(name) + "_save";
+
+            var tableName = config.TableName ??
+                config.CaseConverter?.Convert(name) ??
+                nameof(name);
+
+            var index = string.Empty;
+
+            var procedureContents = string.Join(",\n\t", GetMappedStrings(config));
+
+            var procedureData = config.ParaMaps.Values
+                .Select
+                (
+                    map =>
+                    map.CustomName ??
+                    config.CaseConverter?.Convert(map.Name) ??
+                    map.Name
+                );
+
+            var procedureValues = procedureData
+                .Select(q => $"{procedureName}.{q}");
+
+            var onConflict = config.OnConflict switch
+            {
+                OnConflict.DoNothing => "ON CONFLICT DO NOTHING",
+                OnConflict.Update => CreateOnConflict(procedureData),
+                _ => string.Empty
+            };
+
+            var result = new StringBuilder(_settings.ProcedureTemplate)
+                .Replace("<procedure_name>", procedureName)
+                .Replace("<procedure_contents>", procedureContents)
+                .Replace("<table_name>", tableName)
+                .Replace("<procedure_data>", string.Join(",\n\t\t", procedureData))
+                .Replace("<procedure_values>", string.Join(",\n\t\t", procedureValues))
+                .Replace("<on_conflict>", onConflict)
+                .Replace("\t", "    ");
+
+            using (var fs = new FileStream(procedurePath, FileMode.OpenOrCreate))
+            using (var sw = new StreamWriter(fs))
+            {
+                sw.Write(result.ToString());
+            }
+        }
+
+        private static string CreateOnConflict(IEnumerable<string> procedureData)
+        {
+            var sb = new StringBuilder();
+            sb.Append("ON CONFLICT DO\n\tUPDATE SET\n\t\t");
+            sb.Append(string.Join(",\n\t\t", procedureData.Select(q => $"{q} = excluded.{q}")));
+
+            return sb.ToString();
+        }
+
+        private static void CheckIndex<T>(MapConfig<T> config) where T : class
+        {
+            if (config.Index.Any(q => !config.ParaMaps.ContainsKey(q)))
             {
                 throw new ArgumentException($"{typeof(T).Name} does not contain such properties");
             }
+        }
+
+        private static string CreateIndex<T>(MapConfig<T> config, string tableName) where T : class
+        {
+            var index = config.Index;
+            var isUniqueIndex = config.IsUniqueIndex;
+
+            CheckIndex(config);
 
             if (config.CaseConverter is not null)
             {
                 index = index
-                    .Select(q => config.Mapping[q].CustomName ?? config.CaseConverter.Convert(q))
+                    .Select(q => config.ParaMaps[q].CustomName ?? config.CaseConverter.Convert(q))
                     .ToArray();
             }
 
@@ -76,7 +147,7 @@ namespace AlmostOrm
 
         private static IEnumerable<string> GetMappedStrings<T>(MapConfig<T> config) where T : class
         {
-            var mapping = config.Mapping;
+            var mapping = config.ParaMaps;
 
             return mapping.Values.Select(map =>
             {
