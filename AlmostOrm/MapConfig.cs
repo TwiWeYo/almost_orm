@@ -16,9 +16,10 @@ namespace AlmostOrm.MapConfig
         public string? TableName { get; private set; }
         public string? ProcedureName { get; private set; }
         public bool HasId { get; private set; }
-        public OnConflict OnConflict { get; private set; }
+        public OnConflict OnConflict { get; private set; } = OnConflict.Ignore;
         public bool IsUniqueIndex { get; private set; }
-        public string[] Index { get; private set; }
+        public HashSet<string> Index { get; private set; } = new HashSet<string>();
+        public HashSet<string> Ignored { get; private set; } = new HashSet<string>();
         public ICaseConverter? CaseConverter { get; private set; }
         public Dictionary<string, ParaMap<T>> ParaMaps { get; private init; }
 
@@ -62,10 +63,16 @@ namespace AlmostOrm.MapConfig
             return this;
         }
 
-        public MapConfig<T> WithIndex(bool isUnique, params string[] selector)
+        public MapConfig<T> WithIndex(bool isUnique, params string[] indexes)
         {
             IsUniqueIndex = isUnique;
-            Index = selector;
+            Index = indexes.ToHashSet();
+            return this;
+        }
+
+        public MapConfig<T> Ignore(params string[] ignored)
+        {
+            Ignored = ignored.ToHashSet();
             return this;
         }
 

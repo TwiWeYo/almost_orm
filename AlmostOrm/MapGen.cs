@@ -6,7 +6,7 @@ namespace AlmostOrm
 {
     public static class MapGen
     {
-        private static string path = "map-config.json";
+        private static string path = "Config/map-config.json";
         private static Settings _settings;
         static MapGen()
         {
@@ -44,16 +44,12 @@ namespace AlmostOrm
                 .Replace("<index>", index)
                 .Replace("\t", "    ");
 
-            using (var fs = new FileStream(table_path, FileMode.OpenOrCreate))
-            using (var sw = new StreamWriter(fs))
-            {
-                sw.Write(result.ToString());
-            }
+            WriteToFile(path, result.ToString());
         }
 
         public static void MakeProcedure<T>(string procedurePath, MapConfig<T>? config = null) where T : class
         {
-            config??= new();
+            config ??= new();
             var name = typeof(T).Name;
 
             var procedureName = config.ProcedureName ??
@@ -64,7 +60,19 @@ namespace AlmostOrm
                 config.CaseConverter?.Convert(name) ??
                 nameof(name);
 
-            var index = string.Empty;
+            var index = config.Index;
+            var isUniqueIndex = config.IsUniqueIndex;
+
+            CheckIndex(config);
+
+            if (config.CaseConverter is not null)
+            {
+                index = index?
+                    .Select(q => config.ParaMaps[q].CustomName ?? config.CaseConverter.Convert(q))
+                    .ToHashSet();
+            }
+
+            var indexContents = index?.Any() == true ? $"({string.Join(", ", index)})" : string.Empty;
 
             var procedureContents = string.Join(",\n\t", GetMappedStrings(config));
 
@@ -82,9 +90,9 @@ namespace AlmostOrm
 
             var onConflict = config.OnConflict switch
             {
-                OnConflict.DoNothing => "ON CONFLICT DO NOTHING",
-                OnConflict.Update => CreateOnConflict(procedureData),
-                _ => string.Empty
+                OnConflict.DoNothing => $"ON CONFLICT{indexContents} DO NOTHING",
+                OnConflict.Update => CreateOnConflict(procedureData, indexContents),
+                _ => ";"
             };
 
             var result = new StringBuilder(_settings.ProcedureTemplate)
@@ -96,18 +104,25 @@ namespace AlmostOrm
                 .Replace("<on_conflict>", onConflict)
                 .Replace("\t", "    ");
 
-            using (var fs = new FileStream(procedurePath, FileMode.OpenOrCreate))
+            WriteToFile(procedurePath, result.ToString());
+        }
+
+        private static void WriteToFile(string path, string result)
+        {
+
+            using (var fs = new FileStream(path, File.Exists(path) ? FileMode.Truncate : FileMode.Create))
             using (var sw = new StreamWriter(fs))
             {
-                sw.Write(result.ToString());
+                sw.Write(result);
             }
         }
 
-        private static string CreateOnConflict(IEnumerable<string> procedureData)
+        private static string CreateOnConflict(IEnumerable<string> procedureData, string index)
         {
             var sb = new StringBuilder();
-            sb.Append("ON CONFLICT DO\n\tUPDATE SET\n\t\t");
+            sb.Append($"ON CONFLICT{index} DO\n\tUPDATE SET\n\t\t");
             sb.Append(string.Join(",\n\t\t", procedureData.Select(q => $"{q} = excluded.{q}")));
+            sb.Append(";");
 
             return sb.ToString();
         }
@@ -117,6 +132,11 @@ namespace AlmostOrm
             if (config.Index.Any(q => !config.ParaMaps.ContainsKey(q)))
             {
                 throw new ArgumentException($"{typeof(T).Name} does not contain such properties");
+            }
+
+            if (config.Index.Any(q => config.Ignored.Contains(q)))
+            {
+                throw new ArgumentException($"{typeof(T).Name} is ignored");
             }
         }
 
@@ -131,7 +151,7 @@ namespace AlmostOrm
             {
                 index = index
                     .Select(q => config.ParaMaps[q].CustomName ?? config.CaseConverter.Convert(q))
-                    .ToArray();
+                    .ToHashSet();
             }
 
             var indexName = $"{(isUniqueIndex ? "ux_" : "ix_")}{tableName}_{string.Join('_', index)}";
@@ -147,9 +167,11 @@ namespace AlmostOrm
 
         private static IEnumerable<string> GetMappedStrings<T>(MapConfig<T> config) where T : class
         {
-            var mapping = config.ParaMaps;
+            var mapping = config.ParaMaps
+                .Where(q => !config.Ignored.Contains(q.Key))
+                .Select(q => q.Value);
 
-            return mapping.Values.Select(map =>
+            return mapping.Select(map =>
             {
                 var name = map.CustomName ??
                     config.CaseConverter?.Convert(map.Name) ??
