@@ -13,8 +13,8 @@ namespace AlmostOrm.MapConfig
     public class MapConfig<T> where T : class
     {
         private static readonly PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        public string? TableName { get; private set; }
-        public string? ProcedureName { get; private set; }
+        public Func<string, string>? TableName { get; private set; }
+        public Func<string, string>? ProcedureName { get; private set; }
         public bool HasId { get; private set; }
         public OnConflict OnConflict { get; private set; } = OnConflict.Ignore;
         public bool IsUniqueIndex { get; private set; }
@@ -40,12 +40,12 @@ namespace AlmostOrm.MapConfig
                 .ToDictionary(q => q.Name);
         }
 
-        public MapConfig<T> WithTableName(string tableName)
+        public MapConfig<T> WithTableName(Func<string, string> tableName)
         {
             TableName = tableName;
             return this;
         }
-        public MapConfig<T> WithProcedureName(string procedureName)
+        public MapConfig<T> WithProcedureName(Func<string, string> procedureName)
         {
             ProcedureName = procedureName;
             return this;

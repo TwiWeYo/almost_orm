@@ -23,9 +23,8 @@ namespace AlmostOrm
             config ??= new();
             var name = typeof(T).Name;
 
-            var tableName = config.TableName ?? 
-                config.CaseConverter?.Convert(name) ??
-                nameof(name);
+            var tableName = config.CaseConverter?.Convert(name) ?? nameof(name);
+            tableName = config.TableName?.Invoke(tableName) ?? tableName;
 
             var id = _settings.IdTemplate;
             var index = string.Empty;
@@ -52,13 +51,11 @@ namespace AlmostOrm
             config ??= new();
             var name = typeof(T).Name;
 
-            var procedureName = config.ProcedureName ??
-                config.CaseConverter?.Convert(name + "Save") ??
-                nameof(name) + "_save";
+            var procedureName = config.CaseConverter?.Convert(name + "Save") ?? nameof(name) + "_save";
+            procedureName = config.ProcedureName?.Invoke(procedureName) ?? procedureName;
 
-            var tableName = config.TableName ??
-                config.CaseConverter?.Convert(name) ??
-                nameof(name);
+            var tableName = config.CaseConverter?.Convert(name) ?? nameof(name);
+            tableName = config.TableName?.Invoke(tableName) ?? tableName;
 
             var index = config.Index;
             var isUniqueIndex = config.IsUniqueIndex;
