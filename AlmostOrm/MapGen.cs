@@ -6,11 +6,11 @@ namespace AlmostOrm
 {
     public static class MapGen
     {
-        private static string path = "Config/map-config.json";
+        private static string _path = "Config/map-config.json";
         private static Settings _settings;
         static MapGen()
         {
-            using var fs = new FileStream(path, FileMode.Open);
+            using var fs = new FileStream(_path, FileMode.Open);
             _settings = JsonSerializer.Deserialize<Settings>(fs)!;
             if (_settings == null)
             {
@@ -18,7 +18,7 @@ namespace AlmostOrm
             }
         }
 
-        public static void MakeTable<T>(string table_path, MapConfig<T>? config = null) where T : class
+        public static void MakeTable<T>(string tablePath, MapConfig<T>? config = null) where T : class
         {
             config ??= new();
             var name = typeof(T).Name;
@@ -44,7 +44,7 @@ namespace AlmostOrm
                 .Replace("<index>", index)
                 .Replace("\t", "    ");
 
-            WriteToFile(path, result.ToString());
+            WriteToFile(tablePath, result.ToString());
         }
 
         public static void MakeProcedure<T>(string procedurePath, MapConfig<T>? config = null) where T : class
