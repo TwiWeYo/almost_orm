@@ -1,6 +1,7 @@
-﻿using AlmostOrm.MapConfig;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
+using AlmostOrm.Mappers.Classes;
+using AlmostOrm.Mappers.Parameters;
 
 namespace AlmostOrm
 {
@@ -18,7 +19,8 @@ namespace AlmostOrm
             }
         }
 
-        public static void MakeTable<T>(string tablePath, MapConfig<T>? config = null) where T : class
+        public static void MakeTable<T>(string tablePath, MapConfig<T>? config = null) where T : class => MakeTable<T>(_ => tablePath, config);
+        public static void MakeTable<T>(Func<string, string> tablePath, MapConfig<T>? config = null) where T : class
         {
             config ??= new();
             var name = typeof(T).Name;
@@ -43,15 +45,16 @@ namespace AlmostOrm
                 .Replace("<index>", index)
                 .Replace("\t", "    ");
 
-            WriteToFile(tablePath, result.ToString());
+            WriteToFile(tablePath.Invoke(tableName), result.ToString());
         }
 
-        public static void MakeProcedure<T>(string procedurePath, MapConfig<T>? config = null) where T : class
+        public static void MakeProcedure<T>(string procedurePath, MapConfig<T>? config = null) where T : class => MakeProcedure(_ => procedurePath, config);
+        public static void MakeProcedure<T>(Func<string, string> procedurePath, MapConfig<T>? config = null) where T : class
         {
             config ??= new();
             var name = typeof(T).Name;
 
-            var procedureName = config.CaseConverter?.Convert(name + "Save") ?? nameof(name) + "_save";
+            var procedureName = config.CaseConverter?.Convert(name) ?? nameof(name);
             procedureName = config.ProcedureName?.Invoke(procedureName) ?? procedureName;
 
             var tableName = config.CaseConverter?.Convert(name) ?? nameof(name);
@@ -101,7 +104,7 @@ namespace AlmostOrm
                 .Replace("<on_conflict>", onConflict)
                 .Replace("\t", "    ");
 
-            WriteToFile(procedurePath, result.ToString());
+            WriteToFile(procedurePath.Invoke(procedureName), result.ToString());
         }
 
         private static void WriteToFile(string path, string result)
@@ -174,17 +177,33 @@ namespace AlmostOrm
                     config.CaseConverter?.Convert(map.Name) ??
                     map.Name;
 
-                var precision = map.Precision?.Item1.ToString() ?? string.Empty;
-                precision += map.Precision?.Item2?.ToString() ?? string.Empty;
-                if (!string.IsNullOrEmpty(precision))
-                    precision = $"({precision})";
+                var type = GetTypeWithPrecision(map, config);
 
-                var type = map.SqlType ?? _settings.TypeMaps[map.Type.Name.ToLower()];
-                type = type.Replace("<precision>", precision);
                 var nullability = map.Nullable ? string.Empty : " not null";
 
                 return $"{name} {type}{nullability}";
             });
+        }
+
+        // This is really bad, must be refactored
+        private static string GetTypeWithPrecision<T>(ParaMap<T> map, MapConfig<T> config) where T : class
+        {
+            var precisionTemplate = "<precision>";
+            var type = map.SqlType ?? _settings.TypeMaps![map.Type.Name.ToLower()];
+
+            var splitted = type.Split(precisionTemplate);
+            var precision = () => map.Precision ?? config.DefaultPrecision ?? throw new ArgumentException("no precision is specified");
+            var doublePrecision = () => map.DoublePrecision ?? config.DefaultDoublePrecision ?? throw new ArgumentException("no double precision is specified");
+
+            var res = splitted.Length switch
+            {
+                1 => type,
+                2 => splitted[0] + precision.Invoke() + splitted[1],
+                3 => splitted[0] + doublePrecision.Invoke().Item1  + splitted[1] + doublePrecision.Invoke().Item2 + splitted[2],
+                _ => throw new FormatException("incorrect format")
+            };
+
+            return res;
         }
     }
 }
