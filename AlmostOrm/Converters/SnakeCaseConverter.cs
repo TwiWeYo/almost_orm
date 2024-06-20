@@ -1,39 +1,38 @@
 ﻿using System.Text;
 
-namespace AlmostOrm.Converters
+namespace AlmostOrm.Converters;
+
+public class SnakeCaseConverter : ICaseConverter
 {
-    public class SnakeCaseConverter : ICaseConverter
+    public string Convert(string value)
     {
-        public string Convert(string value)
+        if (string.IsNullOrWhiteSpace(value))
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return value;
-            }
-            var sb = new StringBuilder();
-            var isLastCharUpper = true;
-
-            foreach (char c in value)
-            {
-                if (!char.IsUpper(c))
-                {
-                    sb.Append(c);
-                    isLastCharUpper = false;
-                    continue;
-                }
-
-                if (isLastCharUpper)
-                {
-                    sb.Append(char.ToLowerInvariant(c));
-                    continue;
-                }
-
-                sb.Append('_');
-                sb.Append(char.ToLowerInvariant(c));
-                isLastCharUpper = true;
-            }
-
-            return sb.ToString();
+            return value;
         }
+        var sb = new StringBuilder();
+        var isLastCharUpper = true;
+
+        foreach (char c in value)
+        {
+            if (!char.IsUpper(c))
+            {
+                sb.Append(c);
+                isLastCharUpper = false;
+                continue;
+            }
+
+            if (isLastCharUpper)
+            {
+                sb.Append(char.ToLowerInvariant(c));
+                continue;
+            }
+
+            sb.Append('_');
+            sb.Append(char.ToLowerInvariant(c));
+            isLastCharUpper = true;
+        }
+
+        return sb.ToString();
     }
 }

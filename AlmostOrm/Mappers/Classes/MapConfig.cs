@@ -3,7 +3,7 @@ using AlmostOrm.Mappers.Parameters;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace AlmostOrm.Mappers.Classes;
+namespace AlmostOrm.Mappers;
 public enum OnConflict
 {
     Ignore,

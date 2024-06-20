@@ -1,7 +1,6 @@
-﻿namespace AlmostOrm.Converters
+﻿namespace AlmostOrm.Converters;
+
+public interface ICaseConverter
 {
-    public interface ICaseConverter
-    {
-        public string Convert(string value);
-    }
+    public string Convert(string value);
 }
