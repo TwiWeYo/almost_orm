@@ -87,7 +87,7 @@ public static class GenOrm
 
         var onConflict = config.OnConflict switch
         {
-            OnConflict.DoNothing => $"ON CONFLICT{indexContents} DO NOTHING",
+            OnConflict.DoNothing => $"on conflict{indexContents} do nothing",
             OnConflict.Update => CreateOnConflict(procedureData, indexContents),
             _ => ";"
         };
