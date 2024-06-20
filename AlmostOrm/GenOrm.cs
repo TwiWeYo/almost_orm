@@ -4,11 +4,11 @@ using System.Text.Json;
 
 namespace AlmostOrm;
 
-public static class MapGen
+public static class GenOrm
 {
     private static string _path = "Config/map-config.json";
     private static Settings _settings;
-    static MapGen()
+    static GenOrm()
     {
         using var fs = new FileStream(_path, FileMode.Open);
         _settings = JsonSerializer.Deserialize<Settings>(fs)!;
@@ -117,7 +117,10 @@ public static class MapGen
     private static string CreateOnConflict(IEnumerable<string> procedureData, string index)
     {
         var sb = new StringBuilder();
-        sb.Append($"ON CONFLICT{index} DO\n\tUPDATE SET\n\t\t");
+        sb.Append($@"
+    on conflict{index} do
+        update set
+            ");
         sb.Append(string.Join(",\n\t\t", procedureData.Select(q => $"{q} = excluded.{q}")));
         sb.Append(";");
 
@@ -152,7 +155,7 @@ public static class MapGen
         }
 
         var indexName = $"{(isUniqueIndex ? "ux_" : "ix_")}{tableName}_{string.Join('_', index)}";
-        var indexContents = string.Join(",\n\t", index);
+        var indexContents = string.Join(",\n\t", index) + ';';
 
         return new StringBuilder(_settings.IndexTemplate)
             .Replace("<unique>", isUniqueIndex ? "unique" : string.Empty)

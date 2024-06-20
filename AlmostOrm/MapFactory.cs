@@ -1,5 +1,5 @@
 ﻿
-using AlmostOrm.Mappers.Classes;
+using AlmostOrm.Mappers;
 
 namespace AlmostOrm;
 
@@ -43,11 +43,11 @@ public class MapFactory
 
         if (mappingTypes.HasFlag(MappingTypes.Table))
         {
-            _tableGens += () => MapGen.MakeTable(DefaultTablePath, res);
+            _tableGens += () => GenOrm.MakeTable(DefaultTablePath, res);
         }
         if (mappingTypes.HasFlag(MappingTypes.Procedure))
         {
-            _procedureGens += () => MapGen.MakeProcedure(DefaultProcedurePath, res);
+            _procedureGens += () => GenOrm.MakeProcedure(DefaultProcedurePath, res);
         }
 
         return res;
