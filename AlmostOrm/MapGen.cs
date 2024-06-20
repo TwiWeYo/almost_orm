@@ -27,7 +27,6 @@ public static class MapGen
         var tableName = config.CaseConverter?.Convert(name) ?? nameof(name);
         tableName = config.TableName?.Invoke(tableName) ?? tableName;
 
-        var id = _settings.IdTemplate;
         var index = string.Empty;
 
         var tableContents = string.Join(",\n\t", GetMappedStrings(config));
@@ -40,7 +39,6 @@ public static class MapGen
         var result = new StringBuilder(_settings.TableTemplate)
             .Replace("<table_name>", tableName)
             .Replace("<table_contents>", tableContents)
-            .Replace("<id>", id)
             .Replace("<index>", index)
             .Replace("\t", "    ");
 
