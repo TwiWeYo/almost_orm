@@ -12,7 +12,6 @@ public class Settings
     public string? ProcedureTemplatePath { get; set; }
     public Dictionary<string, string>? TypeMaps { get; set; }
     public string? IndexTemplate { get; set; }
-    public string? IdTemplate { get; set; }
 
     private string GetTemplate(string path)
     {
