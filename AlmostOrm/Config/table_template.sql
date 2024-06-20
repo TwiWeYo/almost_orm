@@ -1,8 +1,6 @@
-CREATE TABLE <table_name>
+create table <table_name>
 (
 	<table_contents>
-)
-
-<id>
+);
 
 <index>

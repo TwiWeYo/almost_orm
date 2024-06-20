@@ -10,6 +10,5 @@
     "string": "varchar(<precision>)",
     "datetime": "date"
   },
-  "IndexTemplate": "CREATE <unique> INDEX <index_name> ON <table_name>\n{\n\t<index_contents>\n}",
-  "IdTemplate": ""
+  "IndexTemplate": "create <unique> index <index_name> on <table_name>\n(\n\t<index_contents>\n);"
 }

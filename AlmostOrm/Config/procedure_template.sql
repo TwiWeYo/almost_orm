@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE <procedure_name>
+create or replace <procedure_name>
 (
 	<procedure_contents>
 )
