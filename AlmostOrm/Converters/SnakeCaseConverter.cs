@@ -13,7 +13,7 @@ namespace AlmostOrm.Converters
             var sb = new StringBuilder();
             var isLastCharUpper = true;
 
-            foreach ( char c in value )
+            foreach (char c in value)
             {
                 if (!char.IsUpper(c))
                 {

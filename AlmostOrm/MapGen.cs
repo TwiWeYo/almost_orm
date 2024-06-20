@@ -1,7 +1,7 @@
-﻿using System.Text;
-using System.Text.Json;
-using AlmostOrm.Mappers.Classes;
+﻿using AlmostOrm.Mappers.Classes;
 using AlmostOrm.Mappers.Parameters;
+using System.Text;
+using System.Text.Json;
 
 namespace AlmostOrm
 {
@@ -199,7 +199,7 @@ namespace AlmostOrm
             {
                 1 => type,
                 2 => splitted[0] + precision.Invoke() + splitted[1],
-                3 => splitted[0] + doublePrecision.Invoke().Item1  + splitted[1] + doublePrecision.Invoke().Item2 + splitted[2],
+                3 => splitted[0] + doublePrecision.Invoke().Item1 + splitted[1] + doublePrecision.Invoke().Item2 + splitted[2],
                 _ => throw new FormatException("incorrect format")
             };
 
