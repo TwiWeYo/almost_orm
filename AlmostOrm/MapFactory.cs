@@ -17,28 +17,28 @@ public class MapFactory
 
     public Func<string, string> DefaultTablePath { get; init; }
     public Func<string, string> DefaultProcedurePath { get; init; }
-    public MapOptions DefaultConfig { get; set; }
+    public MapOptions DefaultOptions { get; set; }
 
-    public MapFactory(MapOptions defaultConfig, Func<string, string>? defaultTablePath = null, Func<string, string>? defaultProcedurePath = null)
+    public MapFactory(MapOptions defaultOptions, Func<string, string>? defaultTablePath = null, Func<string, string>? defaultProcedurePath = null)
     {
-        DefaultConfig = defaultConfig;
+        DefaultOptions = defaultOptions;
         DefaultTablePath = defaultTablePath ?? (name => $"{name}.sql");
         DefaultProcedurePath = defaultProcedurePath ?? (name => $"{name}_save.sql");
     }
     public MapOptions<T> RegisterMap<T>(MappingTypes mappingTypes = MappingTypes.Table | MappingTypes.Procedure) where T : class
     {
-        if (DefaultConfig is null)
+        if (DefaultOptions is null)
         {
-            throw new ArgumentNullException($"{nameof(DefaultConfig)} must be specified");
+            throw new ArgumentNullException($"{nameof(DefaultOptions)} must be specified");
         }
 
         var res = new MapOptions<T>()
-            .WithTableName(DefaultConfig.TableName)
-            .WithProcedureName(DefaultConfig.ProcedureName)
-            .OnConflictDo(DefaultConfig.OnConflict)
-            .WithCaseConverter(DefaultConfig.CaseConverter)
-            .WithDefaultPrecision(DefaultConfig.DefaultPrecision)
-            .WithDefaultDoublePrecision(DefaultConfig.DefaultDoublePrecision)
+            .WithTableName(DefaultOptions.TableName)
+            .WithProcedureName(DefaultOptions.ProcedureName)
+            .OnConflictDo(DefaultOptions.OnConflict)
+            .WithCaseConverter(DefaultOptions.CaseConverter)
+            .WithDefaultPrecision(DefaultOptions.DefaultPrecision)
+            .WithDefaultDoublePrecision(DefaultOptions.DefaultDoublePrecision)
             ;
 
         if (mappingTypes.HasFlag(MappingTypes.Table))

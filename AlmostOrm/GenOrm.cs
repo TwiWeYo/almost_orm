@@ -18,7 +18,7 @@ public static class GenOrm
         }
     }
 
-    public static void MakeTable<T>(string tablePath, MapOptions<T>? options = null) where T : class => MakeTable<T>(_ => tablePath, options);
+    public static void MakeTable<T>(string tablePath, MapOptions<T>? options = null) where T : class => MakeTable(_ => tablePath, options);
     public static void MakeTable<T>(Func<string, string> tablePath, MapOptions<T>? options = null) where T : class
     {
         options ??= new();
@@ -124,30 +124,30 @@ public static class GenOrm
             .ToString();
     }
 
-    private static void CheckIndex<T>(MapOptions<T> config) where T : class
+    private static void CheckIndex<T>(MapOptions<T> options) where T : class
     {
-        if (config.Index.Any(q => !config.ParaMaps.ContainsKey(q)))
+        if (options.Index.Any(q => !options.ParaMaps.ContainsKey(q)))
         {
             throw new ArgumentException($"{typeof(T).Name} does not contain such properties");
         }
 
-        if (config.Index.Any(q => config.Ignored.Contains(q)))
+        if (options.Index.Any(q => options.Ignored.Contains(q)))
         {
             throw new ArgumentException($"{typeof(T).Name} is ignored");
         }
     }
 
-    private static string CreateIndex<T>(MapOptions<T> config, string tableName) where T : class
+    private static string CreateIndex<T>(MapOptions<T> options, string tableName) where T : class
     {
-        var index = config.Index;
-        var isUniqueIndex = config.IsUniqueIndex;
+        var index = options.Index;
+        var isUniqueIndex = options.IsUniqueIndex;
 
-        CheckIndex(config);
+        CheckIndex(options);
 
-        if (config.CaseConverter is not null)
+        if (options.CaseConverter is not null)
         {
             index = index
-                .Select(q => config.ParaMaps[q].CustomName ?? config.CaseConverter.Convert(q))
+                .Select(q => options.ParaMaps[q].CustomName ?? options.CaseConverter.Convert(q))
                 .ToHashSet();
         }
 
@@ -162,36 +162,36 @@ public static class GenOrm
             .ToString();
     }
 
-    private static IEnumerable<string> GetMappedStrings<T>(MapOptions<T> config) where T : class
+    private static IEnumerable<string> GetMappedStrings<T>(MapOptions<T> options) where T : class
     {
-        var mapping = config.ParaMaps
-            .Where(q => !config.Ignored.Contains(q.Key))
+        var mapping = options.ParaMaps
+            .Where(q => !options.Ignored.Contains(q.Key))
             .Select(q => q.Value);
 
         return mapping.Select(map =>
         {
             var name = map.CustomName ??
-                config.CaseConverter?.Convert(map.Name) ??
+                options.CaseConverter?.Convert(map.Name) ??
                 map.Name;
 
-            var type = GetTypeWithPrecision(map, config);
+            var type = GetTypeWithPrecision(map, options);
 
             var nullability = map.Nullable ? string.Empty : " not null";
-            nullability = config.CaseConverter?.Convert(nullability) ?? nullability;
+            nullability = options.CaseConverter?.Convert(nullability) ?? nullability;
 
             return $"{name} {type}{nullability}";
         });
     }
 
     // This is really bad, must be refactored
-    private static string GetTypeWithPrecision<T>(ParaMap<T> map, MapOptions<T> config) where T : class
+    private static string GetTypeWithPrecision<T>(ParaMap<T> map, MapOptions<T> options) where T : class
     {
         var precisionTemplate = "<precision>";
         var type = map.SqlType ?? _config.TypeMaps![map.Type.Name.ToLower()];
 
         var splitted = type.Split(precisionTemplate);
-        var precision = () => map.Precision ?? config.DefaultPrecision ?? throw new ArgumentException("no precision is specified");
-        var doublePrecision = () => map.DoublePrecision ?? config.DefaultDoublePrecision ?? throw new ArgumentException("no double precision is specified");
+        var precision = () => map.Precision ?? options.DefaultPrecision ?? throw new ArgumentException("no precision is specified");
+        var doublePrecision = () => map.DoublePrecision ?? options.DefaultDoublePrecision ?? throw new ArgumentException("no double precision is specified");
 
         var res = splitted.Length switch
         {
