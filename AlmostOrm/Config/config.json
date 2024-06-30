@@ -1,6 +1,5 @@
 {
-  "TableTemplatePath": "Config/table_template.sql",
-  "ProcedureTemplatePath": "Config/procedure_template.sql",
+  "TemplatesPath": "Config/templates.sql",
   "TypeMaps": {
     "single": "numeric(<precision>, <precision>)",
     "double": "numeric(<precision>, <precision>)",
@@ -10,5 +9,11 @@
     "string": "varchar(<precision>)",
     "datetime": "date"
   },
-  "IndexTemplate": "create <unique> index <index_name> on <table_name>\n(\n\t<index_contents>\n);"
+  "TemplateTags": {
+    "table": "table",
+    "index": "index",
+    "procedure": "procedure",
+    "onConflictDoNothing": "on_conflict_do_nothing",
+    "onConflictUpdate": "on_conflict_update"
+  }
 }

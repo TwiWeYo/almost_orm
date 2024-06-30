@@ -17,22 +17,22 @@ public class MapFactory
 
     public Func<string, string> DefaultTablePath { get; init; }
     public Func<string, string> DefaultProcedurePath { get; init; }
-    public MapConfig DefaultConfig { get; set; }
+    public MapOptions DefaultConfig { get; set; }
 
-    public MapFactory(MapConfig defaultConfig, Func<string, string>? defaultTablePath = null, Func<string, string>? defaultProcedurePath = null)
+    public MapFactory(MapOptions defaultConfig, Func<string, string>? defaultTablePath = null, Func<string, string>? defaultProcedurePath = null)
     {
         DefaultConfig = defaultConfig;
         DefaultTablePath = defaultTablePath ?? (name => $"{name}.sql");
         DefaultProcedurePath = defaultProcedurePath ?? (name => $"{name}_save.sql");
     }
-    public MapConfig<T> RegisterMap<T>(MappingTypes mappingTypes = MappingTypes.Table | MappingTypes.Procedure) where T : class
+    public MapOptions<T> RegisterMap<T>(MappingTypes mappingTypes = MappingTypes.Table | MappingTypes.Procedure) where T : class
     {
         if (DefaultConfig is null)
         {
             throw new ArgumentNullException($"{nameof(DefaultConfig)} must be specified");
         }
 
-        var res = new MapConfig<T>()
+        var res = new MapOptions<T>()
             .WithTableName(DefaultConfig.TableName)
             .WithProcedureName(DefaultConfig.ProcedureName)
             .OnConflictDo(DefaultConfig.OnConflict)

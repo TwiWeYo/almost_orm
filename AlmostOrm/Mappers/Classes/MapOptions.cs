@@ -9,7 +9,7 @@ public enum OnConflict
     DoNothing,
     Update
 }
-public class MapConfig<T> : MapConfig where T : class
+public class MapOptions<T> : MapOptions where T : class
 {
     private static readonly PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -19,7 +19,7 @@ public class MapConfig<T> : MapConfig where T : class
     public HashSet<string> Ignored { get; private set; } = new HashSet<string>();
     public Dictionary<string, ParaMap<T>> ParaMaps { get; private init; }
 
-    public MapConfig()
+    public MapOptions()
     {
         ParaMaps = GetDefaultParaMaps();
     }
@@ -39,67 +39,67 @@ public class MapConfig<T> : MapConfig where T : class
     #region Override builder
 
     // In newer version of the language you don't have to do that, however I want .NET 6 support
-    public override MapConfig<T> WithTableName(Func<string, string> tableName)
+    public override MapOptions<T> WithTableName(Func<string, string> tableName)
     {
         base.WithTableName(tableName);
         return this;
     }
-    public override MapConfig<T> WithTableName(string tableName)
+    public override MapOptions<T> WithTableName(string tableName)
     {
         base.WithTableName(tableName);
         return this;
     }
-    public override MapConfig<T> WithProcedureName(Func<string, string> procedureName)
+    public override MapOptions<T> WithProcedureName(Func<string, string> procedureName)
     {
         base.WithProcedureName(procedureName);
         return this;
     }
 
-    public override MapConfig<T> WithProcedureName(string procedureName)
+    public override MapOptions<T> WithProcedureName(string procedureName)
     {
         base.WithProcedureName(procedureName);
         return this;
     }
 
-    public override MapConfig<T> OnConflictDo(OnConflict onConflict)
+    public override MapOptions<T> OnConflictDo(OnConflict onConflict)
     {
         base.OnConflictDo(onConflict);
         return this;
     }
 
-    public override MapConfig<T> WithCaseConverter(ICaseConverter caseConverter)
+    public override MapOptions<T> WithCaseConverter(ICaseConverter caseConverter)
     {
         base.WithCaseConverter(caseConverter);
         return this;
     }
 
-    public override MapConfig<T> WithDefaultPrecision(uint? defaultPrecision)
+    public override MapOptions<T> WithDefaultPrecision(uint? defaultPrecision)
     {
         base.WithDefaultPrecision(defaultPrecision);
         return this;
     }
 
-    public override MapConfig<T> WithDefaultDoublePrecision((uint, uint)? defaultDoublePrecision)
+    public override MapOptions<T> WithDefaultDoublePrecision((uint, uint)? defaultDoublePrecision)
     {
         base.WithDefaultDoublePrecision(defaultDoublePrecision);
         return this;
     }
     #endregion
 
-    public MapConfig<T> WithIndex(bool isUnique, params string[] indexes)
+    public MapOptions<T> WithIndex(bool isUnique, params string[] indexes)
     {
         IsUniqueIndex = isUnique;
         Index = indexes.ToHashSet();
         return this;
     }
 
-    public MapConfig<T> Ignore(params string[] ignored)
+    public MapOptions<T> Ignore(params string[] ignored)
     {
         Ignored = ignored.ToHashSet();
         return this;
     }
 
-    public MapConfig<T> Explicit(params ParaMap<T>[] mapping)
+    public MapOptions<T> Explicit(params ParaMap<T>[] mapping)
     {
         foreach (var map in mapping)
         {
