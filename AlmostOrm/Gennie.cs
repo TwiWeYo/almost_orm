@@ -1,13 +1,21 @@
 ﻿using AlmostOrm.Mappers;
+using Microsoft.Extensions.Options;
 using System.Text;
 
 namespace AlmostOrm;
 
-public static class GenOrm
+public class Gennie
 {
+    private readonly Config _config;
 
-    public static void MakeTable<T>(string tablePath, Config config, MapOptions<T>? options = null) where T : class => MakeTable(_ => tablePath, config, options);
-    public static void MakeTable<T>(Func<string, string> tablePath, Config config, MapOptions<T>? options = null) where T : class
+    public Gennie(IOptions<Config> config) : this(config.Value) { }
+    public Gennie(Config config)
+    {
+        _config = config;
+    }
+
+    public void MakeTable<T>(string tablePath, MapOptions<T>? options = null) where T : class => MakeTable(_ => tablePath, options);
+    public void MakeTable<T>(Func<string, string> tablePath, MapOptions<T>? options = null) where T : class
     {
         options ??= new();
         var name = typeof(T).Name;
@@ -17,14 +25,14 @@ public static class GenOrm
 
         var index = string.Empty;
 
-        var tableContents = string.Join(",\n\t", GetMappedStrings(config, options));
+        var tableContents = string.Join(",\n\t", GetMappedStrings(options));
 
         if (options.Index?.Any() == true)
         {
-            index = CreateIndex(config, options, tableName);
+            index = CreateIndex(options, tableName);
         }
 
-        var result = new StringBuilder(config.Templates["table"])
+        var result = new StringBuilder(_config.Templates["table"])
             .Replace("<table_name>", tableName)
             .Replace("<table_contents>", tableContents)
             .Replace("<index>", index)
@@ -33,8 +41,8 @@ public static class GenOrm
         WriteToFile(tablePath.Invoke(tableName), result.ToString());
     }
 
-    public static void MakeProcedure<T>(string procedurePath, Config config, MapOptions<T>? options = null) where T : class => MakeProcedure(_ => procedurePath, config, options);
-    public static void MakeProcedure<T>(Func<string, string> procedurePath, Config config, MapOptions<T>? options = null) where T : class
+    public void MakeProcedure<T>(string procedurePath, MapOptions<T>? options = null) where T : class => MakeProcedure(_ => procedurePath, options);
+    public void MakeProcedure<T>(Func<string, string> procedurePath, MapOptions<T>? options = null) where T : class
     {
         options ??= new();
         var name = typeof(T).Name;
@@ -59,7 +67,7 @@ public static class GenOrm
 
         var indexContents = index?.Any() == true ? $"({string.Join(", ", index)})" : string.Empty;
 
-        var procedureContents = string.Join(",\n\t", GetMappedStrings(config, options));
+        var procedureContents = string.Join(",\n\t", GetMappedStrings(options));
 
         var procedureData = options.ParaMaps.Values
             .Select
@@ -75,13 +83,13 @@ public static class GenOrm
 
         var onConflict = options.OnConflict switch
         {
-            OnConflict.DoNothing => config.Templates["onConflictDoNothing"]
+            OnConflict.DoNothing => _config.Templates["onConflictDoNothing"]
                 .Replace("<index>", indexContents),
-            OnConflict.Update => CreateOnConflict(config, procedureData, indexContents),
+            OnConflict.Update => CreateOnConflict(procedureData, indexContents),
             _ => ";"
         };
 
-        var result = new StringBuilder(config.Templates["procedure"])
+        var result = new StringBuilder(_config.Templates["procedure"])
             .Replace("<procedure_name>", procedureName)
             .Replace("<procedure_contents>", procedureContents)
             .Replace("<table_name>", tableName)
@@ -103,10 +111,10 @@ public static class GenOrm
         }
     }
 
-    private static string CreateOnConflict(Config config, IEnumerable<string> procedureData, string index)
+    private string CreateOnConflict(IEnumerable<string> procedureData, string index)
     {
         var tableContents = string.Join(",\n\t\t", procedureData.Select(q => $"{q} = excluded.{q}"));
-        return new StringBuilder(config.Templates["onConflictUpdate"])
+        return new StringBuilder(_config.Templates["onConflictUpdate"])
             .Replace("<index>", index)
             .Replace("<table_contents>", tableContents)
             .ToString();
@@ -125,7 +133,7 @@ public static class GenOrm
         }
     }
 
-    private static string CreateIndex<T>(Config config, MapOptions<T> options, string tableName) where T : class
+    private string CreateIndex<T>(MapOptions<T> options, string tableName) where T : class
     {
         var index = options.Index;
         var isUniqueIndex = options.IsUniqueIndex;
@@ -142,7 +150,7 @@ public static class GenOrm
         var indexName = $"{(isUniqueIndex ? "ux_" : "ix_")}{tableName}_{string.Join('_', index)}";
         var indexContents = string.Join(",\n\t", index) + ';';
 
-        return new StringBuilder(config.Templates["index"])
+        return new StringBuilder(_config.Templates["index"])
             .Replace("<unique>", isUniqueIndex ? "unique" : string.Empty)
             .Replace("<index_name>", indexName)
             .Replace("<table_name>", tableName)
@@ -150,7 +158,7 @@ public static class GenOrm
             .ToString();
     }
 
-    private static IEnumerable<string> GetMappedStrings<T>(Config config, MapOptions<T> options) where T : class
+    private IEnumerable<string> GetMappedStrings<T>(MapOptions<T> options) where T : class
     {
         var mapping = options.ParaMaps
             .Where(q => !options.Ignored.Contains(q.Key))
@@ -162,7 +170,7 @@ public static class GenOrm
                 options.CaseConverter?.Convert(map.Name) ??
                 map.Name;
 
-            var type = GetTypeWithPrecision(map, config, options);
+            var type = GetTypeWithPrecision(map, options);
 
             var nullability = map.Nullable ? string.Empty : " not null";
             nullability = options.CaseConverter?.Convert(nullability) ?? nullability;
@@ -172,10 +180,10 @@ public static class GenOrm
     }
 
     // This is really bad, must be refactored
-    private static string GetTypeWithPrecision<T>(ParaMap<T> map, Config config, MapOptions<T> options) where T : class
+    private string GetTypeWithPrecision<T>(ParaMap<T> map, MapOptions<T> options) where T : class
     {
         var precisionTemplate = "<precision>";
-        var type = map.SqlType ?? config.TypeMaps![map.Type.Name.ToLower()];
+        var type = map.SqlType ?? _config.TypeMaps![map.Type.Name.ToLower()];
 
         var splitted = type.Split(precisionTemplate);
         var precision = () => map.Precision ?? options.DefaultPrecision ?? throw new ArgumentException("no precision is specified");

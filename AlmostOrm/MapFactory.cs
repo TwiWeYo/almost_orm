@@ -12,22 +12,22 @@ public enum MappingTypes
 
 public class MapFactory
 {
+
+    private readonly Gennie _gennie;
+
     private Action? _tableGens;
     private Action? _procedureGens;
-    private Config _config;
 
-    public Func<string, string> DefaultTablePath { get; init; }
-    public Func<string, string> DefaultProcedurePath { get; init; }
+    public Func<string, string> DefaultTablePath { get; set; }
+    public Func<string, string> DefaultProcedurePath { get; set; }
     public MapOptions DefaultOptions { get; set; }
 
-    public MapFactory(Config config, MapOptions defaultOptions, Func<string, string>? defaultTablePath = null, Func<string, string>? defaultProcedurePath = null)
+    public MapFactory(MapOptions defaultOptions, Gennie gennie)
     {
-        _config = config ?? throw new ArgumentNullException(nameof(config));
-
         DefaultOptions = defaultOptions;
-        DefaultTablePath = defaultTablePath ?? (name => $"{name}.sql");
-        DefaultProcedurePath = defaultProcedurePath ?? (name => $"{name}_save.sql");
+        _gennie = gennie;
     }
+    
     public MapOptions<T> RegisterMap<T>(MappingTypes mappingTypes = MappingTypes.Table | MappingTypes.Procedure) where T : class
     {
         if (DefaultOptions is null)
@@ -46,11 +46,11 @@ public class MapFactory
 
         if (mappingTypes.HasFlag(MappingTypes.Table))
         {
-            _tableGens += () => GenOrm.MakeTable(DefaultTablePath, _config, res);
+            _tableGens += () => _gennie.MakeTable(DefaultTablePath, res);
         }
         if (mappingTypes.HasFlag(MappingTypes.Procedure))
         {
-            _procedureGens += () => GenOrm.MakeProcedure(DefaultProcedurePath, _config, res);
+            _procedureGens += () => _gennie.MakeProcedure(DefaultProcedurePath, res);
         }
 
         return res;
