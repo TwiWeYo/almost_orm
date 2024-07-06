@@ -27,7 +27,7 @@ public class MapFactory
         DefaultOptions = defaultOptions;
         _gennie = gennie;
     }
-    
+
     public MapOptions<T> RegisterMap<T>(MappingTypes mappingTypes = MappingTypes.Table | MappingTypes.Procedure) where T : class
     {
         if (DefaultOptions is null)
