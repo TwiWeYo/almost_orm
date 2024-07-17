@@ -1,4 +1,5 @@
 ﻿using AlmostOrm.Mappers;
+using AlmostOrm.Savers;
 using Microsoft.Extensions.Options;
 using System.Text;
 
@@ -7,11 +8,13 @@ namespace AlmostOrm;
 public class Gennie
 {
     private readonly Config _config;
+    private readonly IMapSaver _mapSaver;
 
-    public Gennie(IOptions<Config> config) : this(config.Value) { }
-    public Gennie(Config config)
+    public Gennie(IOptions<Config> config, IMapSaver mapSaver) : this(config.Value, mapSaver) { }
+    public Gennie(Config config, IMapSaver mapSaver)
     {
         _config = config;
+        _mapSaver = mapSaver;
     }
 
     public void MakeTable<T>(string tablePath, MapOptions<T>? options = null) where T : class => MakeTable(_ => tablePath, options);
@@ -22,6 +25,9 @@ public class Gennie
 
         var tableName = options.CaseConverter?.Convert(name) ?? nameof(name);
         tableName = options.TableName?.Invoke(tableName) ?? tableName;
+
+        if (_mapSaver.CheckIfExists(tablePath.Invoke(tableName)))
+            return;
 
         var index = string.Empty;
 
@@ -38,7 +44,7 @@ public class Gennie
             .Replace("<index>", index)
             .Replace("\t", "    ");
 
-        WriteToFile(tablePath.Invoke(tableName), result.ToString());
+        _mapSaver.Save(tablePath.Invoke(tableName), result.ToString());
     }
 
     public void MakeProcedure<T>(string procedurePath, MapOptions<T>? options = null) where T : class => MakeProcedure(_ => procedurePath, options);
@@ -49,6 +55,9 @@ public class Gennie
 
         var procedureName = options.CaseConverter?.Convert(name) ?? nameof(name);
         procedureName = options.ProcedureName?.Invoke(procedureName) ?? procedureName;
+
+        if (_mapSaver.CheckIfExists(procedurePath.Invoke(procedureName)))
+            return;
 
         var tableName = options.CaseConverter?.Convert(name) ?? nameof(name);
         tableName = options.TableName?.Invoke(tableName) ?? tableName;
@@ -98,17 +107,7 @@ public class Gennie
             .Replace("<on_conflict>", onConflict)
             .Replace("\t", "    ");
 
-        WriteToFile(procedurePath.Invoke(procedureName), result.ToString());
-    }
-
-    private static void WriteToFile(string path, string result)
-    {
-
-        using (var fs = new FileStream(path, File.Exists(path) ? FileMode.Truncate : FileMode.Create))
-        using (var sw = new StreamWriter(fs))
-        {
-            sw.Write(result);
-        }
+        _mapSaver.Save(procedurePath.Invoke(procedureName), result.ToString());
     }
 
     private string CreateOnConflict(IEnumerable<string> procedureData, string index)
