@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlmostOrm", "AlmostOrm.csproj", "{7DDB640D-DE74-4DE2-A826-E1B5CE6A95A3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ORMini", "ORMini.csproj", "{7DDB640D-DE74-4DE2-A826-E1B5CE6A95A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlmostOrmPlayground", "..\AlmostOrmPlayground\AlmostOrmPlayground.csproj", "{DE8007B5-377C-4511-97C8-08441C44213F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ORMiniPlayground", "..\AlmostOrmPlayground\ORMiniPlayground.csproj", "{9FB74737-29DB-45B6-8E1B-B5BADF212B4E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{7DDB640D-DE74-4DE2-A826-E1B5CE6A95A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7DDB640D-DE74-4DE2-A826-E1B5CE6A95A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7DDB640D-DE74-4DE2-A826-E1B5CE6A95A3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DE8007B5-377C-4511-97C8-08441C44213F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DE8007B5-377C-4511-97C8-08441C44213F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DE8007B5-377C-4511-97C8-08441C44213F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DE8007B5-377C-4511-97C8-08441C44213F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FB74737-29DB-45B6-8E1B-B5BADF212B4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FB74737-29DB-45B6-8E1B-B5BADF212B4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FB74737-29DB-45B6-8E1B-B5BADF212B4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FB74737-29DB-45B6-8E1B-B5BADF212B4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
