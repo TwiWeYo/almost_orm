@@ -1,6 +1,6 @@
-﻿using AlmostOrm.Converters;
+﻿using ORMini.Converters;
 
-namespace AlmostOrm.Mappers;
+namespace ORMini.Mappers;
 
 public class MapOptions
 {

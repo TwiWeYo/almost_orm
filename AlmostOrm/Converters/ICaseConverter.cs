@@ -1,4 +1,4 @@
-﻿namespace AlmostOrm.Converters;
+﻿namespace ORMini.Converters;
 
 public interface ICaseConverter
 {

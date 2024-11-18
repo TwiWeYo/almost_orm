@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace AlmostOrm.Converters;
+namespace ORMini.Converters;
 
 public class SnakeCaseConverter : ICaseConverter
 {

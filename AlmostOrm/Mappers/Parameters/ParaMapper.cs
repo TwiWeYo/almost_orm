@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
 
-namespace AlmostOrm.Mappers;
+namespace ORMini.Mappers;
 
 public static class ParaMapper
 {

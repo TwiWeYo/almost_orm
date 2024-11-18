@@ -1,9 +1,9 @@
-﻿using AlmostOrm.Mappers;
-using AlmostOrm.Savers;
+﻿using ORMini.Mappers;
+using ORMini.Savers;
 using Microsoft.Extensions.Options;
 using System.Text;
 
-namespace AlmostOrm;
+namespace ORMini;
 
 public class Gennie
 {

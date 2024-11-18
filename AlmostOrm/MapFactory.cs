@@ -1,7 +1,7 @@
 ﻿
-using AlmostOrm.Mappers;
+using ORMini.Mappers;
 
-namespace AlmostOrm;
+namespace ORMini;
 
 [Flags]
 public enum MappingTypes

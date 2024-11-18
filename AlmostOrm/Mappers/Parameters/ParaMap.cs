@@ -1,4 +1,4 @@
-﻿namespace AlmostOrm.Mappers;
+﻿namespace ORMini.Mappers;
 
 public sealed class ParaMap<T> where T : class
 {

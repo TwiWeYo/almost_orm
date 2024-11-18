@@ -1,8 +1,8 @@
-﻿using AlmostOrm.Converters;
+﻿using ORMini.Converters;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace AlmostOrm.Mappers;
+namespace ORMini.Mappers;
 public enum OnConflict
 {
     Ignore,

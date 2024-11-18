@@ -1,4 +1,4 @@
-﻿namespace AlmostOrm.Savers;
+﻿namespace ORMini.Savers;
 public interface IMapSaver
 {
     bool CheckIfExists(string path);
